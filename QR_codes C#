@@ -1,0 +1,88 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using MessagingToolkit.QRCode.Codec;
+using System.Drawing;
+using MessagingToolkit.QRCode.Codec.Data;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+using Microsoft.Win32;
+using MessagingToolkit.QRCode.ExceptionHandler;
+
+namespace test_qr
+{
+    /// <summary>
+    /// Логика взаимодействия для MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
+
+        private void bt_create_qr_Click(object sender, RoutedEventArgs e)
+        {
+            Create_QR();
+        }
+
+        private void Create_QR()
+        {
+            string data_in_qr = tb_data.Text;
+            if (data_in_qr == "")
+            {
+                return;
+            }
+            QRCodeEncoder encoder = new QRCodeEncoder();
+            Bitmap qrcode = encoder.Encode(data_in_qr);
+            Save_QR(qrcode);
+        }
+
+
+        private void Save_QR(Bitmap qr)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            Random rnd = new Random();
+            saveFileDialog.FileName = $"QR_{rnd.Next(1000000, 9999999)}";
+            saveFileDialog.Filter = "PNG | *.png";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                qr.Save(saveFileDialog.FileName, System.Drawing.Imaging.ImageFormat.Png);
+            }
+        }
+
+        private void bt_read_qr_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "PNG | *.png";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                BitmapImage image = new BitmapImage(new Uri(openFileDialog.FileName));
+                image_qr.Source = image;
+
+                QRCodeDecoder decoder = new QRCodeDecoder();
+                using (Bitmap bitmap = new Bitmap(openFileDialog.FileName))
+                {
+                    try
+                    {
+                        tb_read_info.Text = decoder.Decode(new QRCodeBitmapImage(bitmap as Bitmap));
+                    }
+                    catch (DecodingFailedException)
+                    {
+                        MessageBox.Show("QR не распознан.");
+                    }
+                }
+            }
+
+        }
+    }
+}
